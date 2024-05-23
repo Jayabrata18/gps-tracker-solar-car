@@ -3,6 +3,7 @@ import * as L from 'leaflet';
 import 'leaflet-routing-machine';
 import { stationMarker, userMarker } from './icons/user-location';
 import { MapService } from './services/map.service';
+import { interval } from 'rxjs';
 
 @Component({
   selector: 'app-map',
@@ -13,13 +14,16 @@ export class MapComponent implements AfterViewInit {
   showPopup: boolean = false;
   private map: any;
   private center: any = [22.57631593318771, 88.4280334698181];
-
-  constructor(private mapService: MapService) {}
+  marker : any;
+  constructor(private mapService: MapService) { }
   private initMap(): void {
-    this.map = L.map('map', {
-      center: this.center,
-      zoom: 15,
-    });
+    if(!this.map) {
+      this.map = L.map('map', {
+        center: this.center,
+        zoom: 15,
+      });
+    }
+    
 
     const tiles = L.tileLayer(
       'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -30,13 +34,15 @@ export class MapComponent implements AfterViewInit {
           "&copy; <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a>'",
       },
     );
-
-    L.marker(this.center, { icon: userMarker }).addTo(this.map);
+    if(this.marker){
+      this.map.removeLayer(this.marker);
+    }
+    this.marker = L.marker(this.center, { icon: userMarker, draggable: true }).addTo(this.map);
 
     tiles.addTo(this.map);
   }
 
-  private makerOnClick(e: any) {}
+  private makerOnClick(e: any) { }
   addChargingStations() {
     L.circle(this.center, 1000).addTo(this.map);
     this.mapService.fetchChargingStations().subscribe((res: any) => {
@@ -49,10 +55,13 @@ export class MapComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.mapService.fetchLocation().subscribe((res : any) => {
-      this.center = [res.row[0]['latitude'],res.row[0]['longitude']];
-      this.initMap();
-    })
+    interval(5000).subscribe(() => {
+      this.mapService.fetchLocation().subscribe((res: any) => {
+        this.center = [res.row[0]['latitude'], res.row[0]['longitude']];
+        this.initMap();
+      })
+      
+    });
   }
 
   togglePopup() {
