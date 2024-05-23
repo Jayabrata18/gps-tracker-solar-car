@@ -1,0 +1,16 @@
+.battery-container{
+    padding: 20px;
+    div{
+        span {
+            font-size: 20px;
+        }
+    }
+    
+    app-svg-battery{
+        ::ng-deep{
+            svg{
+                height: 200px;
+            }
+        }
+    }   
+}
